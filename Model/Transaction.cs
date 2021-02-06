@@ -23,6 +23,12 @@ namespace McNativePayment.Model
         [MaxLength(1024)]
         public string Subject { get; set; }
 
+        public Guid? ProductId { get; set; }
+
+        public Guid? ProductEditionId { get; set; }
+
+        public Guid? OrderId { get; set; }
+
         [Required]
         [Range(0, 10000)]
         public double? AmountOut { get; set; }

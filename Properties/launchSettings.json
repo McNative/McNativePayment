@@ -22,7 +22,15 @@
       "launchBrowser": true,
       "launchUrl": "weatherforecast",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "MCNATIVE_DATABASE": "Server=192.168.1.14;Port=3306;Database=mcnative;User=mcnative-payment;Password=\"Eh)kjpCtizsDhLskbD8uY6HFtwg&kFRHY\";Pooling=true",
+        "PAYPAL_SECRET": "EGhTZCnzm8dNKMgW4kAdb8drFlss3fDioAVwokkXRgJw_9hA0-V2cXDwmVkfyGuFCwIBaR9xECpcDmKS",
+        "PAYPAL_URL_ORDER": "https://api.sandbox.paypal.com/v2/checkout/orders",
+        "PAYPAL_URL_OAUTH": "https://api-m.sandbox.paypal.com/v1/oauth2/token",
+        "PAYPAL_WEB_HOOK_ID": "65C16196SS7683423",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "PAYPAL_REDIRECT": "https://development-redirect-davide.pretronic.net/service/paypal",
+        "PAYPAL_CLIENT_ID": "ASxuOnNuiBx7wf6B2yZpr_TrQroOopWtA_hzLurK_NO0vFROUnUKLj54ncfH77_U-fGtVvZqN-2pmNJK",
+        "PAYMENT_DATABASE": "Server=192.168.1.14;Port=3306;Database=mcnative-payment;User=mcnative-payment;Password=\"Eh)kjpCtizsDhLskbD8uY6HFtwg&kFRHY\";Pooling=true"
       },
       "applicationUrl": "https://localhost:5001;http://localhost:5000"
     },

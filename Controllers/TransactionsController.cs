@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -8,30 +9,24 @@ using McNativePayment.Model.response;
 using Microsoft.AspNet.OData;
 using Microsoft.AspNet.OData.Routing;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace McNativePayment.Controllers
 {
 
-    //[Authorize]
     [ODataRoutePrefix("Transactions")]
+    [Authorize(AuthenticationSchemes = IssuerAuthenticationHandler.AUTHENTICATION_SCHEMA)]
     public class TransactionsController : ODataController
     {
 
         private readonly PaymentContext _context;
 
-        public TransactionsController(PaymentContext context)
+        public TransactionsController()
         {
-            _context = context;
+            _context = null;
         }
 
-        [HttpGet]
-        [EnableQuery]
-        public ActionResult<IQueryable<Transaction>> GetTransactions()
-        {
-            return NotFound();
-            return _context.Transactions;
-        }
 
         [HttpPost]
         [Authorize(AuthenticationSchemes = IssuerAuthenticationHandler.AUTHENTICATION_SCHEMA)]

@@ -8,14 +8,26 @@ namespace McNativePayment.Model
 
         public DbSet<Transaction> Transactions { get; set; }
 
-        public DbSet<Request> Requests { get; set; }
+        public DbSet<Order> Orders { get; set; }
+
+        public DbSet<OrderProduct> OrderProducts { get; set; }
+
+        public DbSet<Product> Products { get; set; }
+
+        public DbSet<ProductEdition> ProductEditions { get; set; }
+
+        public DbSet<ProductAssignment> ProductAssignments { get; set; }
 
         public DbSet<Issuer> Issuers { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Transaction>().ToTable("mcnative_payment_transactions");
-            modelBuilder.Entity<Request>().ToTable("mcnative_payment_requests");
-            modelBuilder.Entity<Issuer>().ToTable("mcnative_payment_issuers");
+            modelBuilder.Entity<Order>().ToTable("mcnative_payment_order");
+            modelBuilder.Entity<OrderProduct>().ToTable("mcnative_payment_order_products");
+            modelBuilder.Entity<Product>().ToTable("mcnative_payment_product");
+            modelBuilder.Entity<ProductEdition>().ToTable("mcnative_payment_product_editions");
+            modelBuilder.Entity<ProductAssignment>().ToTable("mcnative_payment_product_assignments");
+            modelBuilder.Entity<Issuer>().ToTable("mcnative_payment_issuer");
         }
 
     }
