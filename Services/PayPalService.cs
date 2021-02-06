@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -30,9 +31,27 @@ namespace McNativePayment.Services
             _redirectUrl = redirectUrl;
         }
 
-        public async Task CreateOrder(Order order)
+        public async Task CreateOrder(Order order,IList<ProductEdition> products)
         {
             if (_accessToken == null || _expiry < DateTime.Now) await Authorize();
+
+            object[] requestProducts = new object[products.Count];
+            int index = 0;
+            foreach (var product in products)
+            {
+                requestProducts[index] = new
+                {
+                    unit_amount = new
+                    {
+                        currency_code = "EUR",
+                        value = product.Price
+                    },
+                    name = product.Product.Name+" ("+product.Name+")",
+                    category = "DIGITAL_GOODS",
+                    quantity = "1",
+                };
+                index++;
+            }
 
             object content = new {
                 intent = "CAPTURE",
@@ -41,8 +60,19 @@ namespace McNativePayment.Services
                     new {
                         amount = new {
                             currency_code = "EUR",
-                            value= order.Amount
-                        }
+                            value = order.Amount,
+                            breakdown = new
+                            {
+                                item_total = new
+                                {
+                                    currency_code = "EUR",
+                                    value = order.Amount,
+                                }
+                            }
+                        },
+                        description =  "McNative Store payment",
+                        invoice_id = order.Id.ToString(),
+                        items = requestProducts
                     }
                 },
                 application_context = new {
@@ -70,7 +100,20 @@ namespace McNativePayment.Services
             postStream.Flush();
             postStream.Close();
 
-            HttpWebResponse response = await request.GetResponseAsync() as HttpWebResponse;
+            HttpWebResponse response = null;
+            try
+            {
+                response = await request.GetResponseAsync() as HttpWebResponse;
+            }
+            catch (WebException ex)
+            {
+                using (var stream = ex.Response.GetResponseStream())
+                using (var readerx = new StreamReader(stream))
+                {
+                    Console.WriteLine(readerx.ReadToEnd());
+                }
+            }
+
 
             StreamReader reader = new StreamReader(response.GetResponseStream());
             string json = reader.ReadToEnd();

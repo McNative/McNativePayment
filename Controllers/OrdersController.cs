@@ -7,6 +7,7 @@ using McNativePayment.Services;
 using Microsoft.AspNet.OData;
 using Microsoft.AspNet.OData.Routing;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using LicenseActive = McNativePayment.Model.LicenseActive;
 
 namespace McNativePayment.Controllers
@@ -34,7 +35,10 @@ namespace McNativePayment.Controllers
             string organisationId = (string)parameters["OrganisationId"];
             IEnumerable<Guid> products0 = (IEnumerable<Guid>)parameters["Products"];
 
-            IList<ProductEdition> products = _context.ProductEditions.Where(p => products0.Contains(p.Id)).ToList();
+            IList<ProductEdition> products = _context.ProductEditions
+                .Where(p => products0.Contains(p.Id))
+                .Include(e => e.Product)
+                .ToList();
             foreach (Guid product0 in products0)
             {
                 ProductEdition product = products.FirstOrDefault(p => p.Id == product0);
@@ -53,7 +57,6 @@ namespace McNativePayment.Controllers
             order.Created = DateTime.Now;
             order.Expiry = DateTime.Now.AddDays(1);
 
-            await _payPalService.CreateOrder(order);
             await _context.Orders.AddAsync(order);
 
             foreach (ProductEdition product in products)
@@ -65,6 +68,8 @@ namespace McNativePayment.Controllers
                     Amount = product.Price
                 });
             }
+
+            await _payPalService.CreateOrder(order, products);
 
             await _context.SaveChangesAsync();
             return Ok(order);
