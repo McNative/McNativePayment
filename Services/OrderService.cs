@@ -15,7 +15,6 @@ namespace McNativePayment.Services
     {
 
         private static Random RANDOM = new Random();
-        public static ConcurrentQueue<Order> ORDERS = new ConcurrentQueue<Order>();
         private readonly IServiceScopeFactory _scopeFactory;
 
         public OrderService(IServiceScopeFactory scopeFactory)
@@ -30,7 +29,7 @@ namespace McNativePayment.Services
         }
         protected override Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            return Task.Run(() =>DoWork(cancellationToken), cancellationToken);
+            return Task.Run(() => DoWork(cancellationToken), cancellationToken);
         }
 
         private async Task DoWork(CancellationToken cancellationToken)
@@ -44,87 +43,97 @@ namespace McNativePayment.Services
                 await using var payTransaction = await payment.Database.BeginTransactionAsync(cancellationToken);
                 try
                 {
-                    if (ORDERS.TryDequeue(out var order))
+                    IList<Order> orders = payment.Orders.Where(o => o.Status == "APPROVED")
+                        .Include(e => e.Products)
+                        .ThenInclude(e => e.ProductEdition)
+                        .ThenInclude(e => e.Product)
+                        .ThenInclude(e => e.Assignments)
+                        .ToList();
+                    foreach (Order order in orders)
                     {
-                        IList<OrderProduct> products = payment.OrderProducts.Where(p => p.OrderId == order.Id)
-                            .Include(e => e.ProductEdition)
-                            .ThenInclude(e => e.Product)
-                            .ThenInclude(e => e.Assignments)
-                            .ToList();
-
-                        Transaction transaction = new Transaction
+                        try
                         {
-                            ToOrganisationId = order.OrganisationId,
-                            Subject = "Purchase",
-                            OrderId = order.Id,
-                            AmountIn = order.Amount,
-                            AmountOut = order.Amount,
-                            Status = "APPROVED",
-                            Time = DateTime.Now,
-                            IssuerId = "464d60d2-e1fc-4986-b7cd-70ad6288f666"
-                        };
-
-                        foreach (OrderProduct orderProduct in products)
-                        {
-                            ProductEdition edition = orderProduct.ProductEdition;
-                            Product product = edition.Product;
-                            Transaction internalTransaction = new Transaction
+                            ICollection<OrderProduct> products = order.Products;
+                            Transaction transaction = new Transaction
                             {
-                                FromOrganisationId = order.OrganisationId,
-                                ToOrganisationId = product.OrganisationId,
+                                ToOrganisationId = order.OrganisationId,
                                 Subject = "Purchase",
                                 OrderId = order.Id,
-                                ProductId = product.Id,
-                                ProductEditionId = product.Id,
-                                AmountIn = orderProduct.Amount,
-                                AmountOut = orderProduct.Amount*0.8,
+                                AmountIn = order.Amount,
+                                AmountOut = order.Amount,
                                 Status = "APPROVED",
                                 Time = DateTime.Now,
                                 IssuerId = "464d60d2-e1fc-4986-b7cd-70ad6288f666"
                             };
-                            await payment.AddAsync(internalTransaction, cancellationToken);
 
-                            foreach (ProductAssignment assignment in product.Assignments)
-                            { 
-                                LicenseActive active = await mcnative.ActiveLicenses.Where(a => a.OrganisationId == order.OrganisationId).FirstOrDefaultAsync(cancellationToken);
-                                if (active == null)
+                            foreach (OrderProduct orderProduct in products)
+                            {
+                                ProductEdition edition = orderProduct.ProductEdition;
+                                Product product = edition.Product;
+                                Transaction internalTransaction = new Transaction
                                 {
-                                    active = new LicenseActive
+                                    FromOrganisationId = order.OrganisationId,
+                                    ToOrganisationId = product.OrganisationId,
+                                    Subject = "Purchase",
+                                    OrderId = order.Id,
+                                    ProductId = product.Id,
+                                    ProductEditionId = product.Id,
+                                    AmountIn = orderProduct.Amount,
+                                    AmountOut = orderProduct.Amount * 0.8,
+                                    Status = "APPROVED",
+                                    Time = DateTime.Now,
+                                    IssuerId = "464d60d2-e1fc-4986-b7cd-70ad6288f666"
+                                };
+                                await payment.AddAsync(internalTransaction, cancellationToken);
+
+                                foreach (ProductAssignment assignment in product.Assignments)
+                                {
+                                    LicenseActive active = await mcnative.ActiveLicenses.Where(a => a.OrganisationId == order.OrganisationId).FirstOrDefaultAsync(cancellationToken);
+                                    if (active == null)
                                     {
-                                        LicenseId = assignment.ReferenceId, 
-                                        OrganisationId = order.OrganisationId,
-                                        Key = RandomString(128),
-                                        ActivationDate = DateTime.Now
-                                    };
-                                    if(edition.Duration != null) active.Expiry = DateTime.Now.AddDays(edition.Duration.Value);
-                                    await mcnative.AddAsync(active, cancellationToken);
-                                }
-                                else
-                                {
-                                    if(active.Expiry != null) active.Expiry = active.Expiry.Value.AddDays(edition.Duration.Value);
-                                    active.LastRenewal = DateTime.Now; 
-                                    mcnative.Update(active);
+                                        active = new LicenseActive
+                                        {
+                                            LicenseId = assignment.ReferenceId,
+                                            OrganisationId = order.OrganisationId,
+                                            Key = RandomString(128),
+                                            ActivationDate = DateTime.Now
+                                        };
+                                        if (edition.Duration != null) active.Expiry = DateTime.Now.AddDays(edition.Duration.Value);
+                                        await mcnative.AddAsync(active, cancellationToken);
+                                    }
+                                    else
+                                    {
+                                        if (active.Expiry != null) active.Expiry = active.Expiry.Value.AddDays(edition.Duration.Value);
+                                        active.LastRenewal = DateTime.Now;
+                                        mcnative.Update(active);
+                                    }
                                 }
                             }
+
+                            order.Status = "COMPLETED";
+
+                            payment.Update(order);
+                            await payment.AddAsync(transaction, cancellationToken);
+
+                            await payment.SaveChangesAsync(cancellationToken);
+                            await mcnative.SaveChangesAsync(cancellationToken);
+                            await payTransaction.CommitAsync(cancellationToken);
+                            await mcnTransaction.CommitAsync(cancellationToken);
                         }
-
-                        order.Status = "COMPLETED";
-
-                        payment.Update(order);
-                        await payment.AddAsync(transaction, cancellationToken);
-
-                        await payment.SaveChangesAsync(cancellationToken);
-                        await mcnative.SaveChangesAsync(cancellationToken);
-                        await payTransaction.CommitAsync(cancellationToken);
-                        await mcnTransaction.CommitAsync(cancellationToken);
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex);
+                            await payTransaction.RollbackAsync(cancellationToken);
+                            await mcnTransaction.RollbackAsync(cancellationToken);
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex);
-                    await payTransaction.RollbackAsync(cancellationToken);
-                    await mcnTransaction.RollbackAsync(cancellationToken);
                 }
+
+                Thread.Sleep(1000 * 60);
             }
         }
     }

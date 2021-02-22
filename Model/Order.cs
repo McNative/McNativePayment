@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -27,5 +28,9 @@ namespace McNativePayment.Model
         public DateTime Expiry { get; set; }
 
         public string Status { get; set; }
+
+
+        [InverseProperty("Order")]
+        public virtual ICollection<OrderProduct> Products { get; set; }
     }
 }

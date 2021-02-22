@@ -47,8 +47,6 @@ namespace McNativePayment.Controllers
             order.Status = "APPROVED";
             await _context.SaveChangesAsync();
 
-            OrderService.ORDERS.Enqueue(order);
-
             return Redirect("https://console.mcnative.org?checkout=complete");
         }
 
