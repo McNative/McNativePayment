@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace McNativePayment.Model
 {
@@ -30,6 +31,7 @@ namespace McNativePayment.Model
         public string Status { get; set; }
 
 
+        [JsonIgnore]
         [InverseProperty("Order")]
         public virtual ICollection<OrderProduct> Products { get; set; }
     }
