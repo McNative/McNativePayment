@@ -26,7 +26,7 @@ namespace McNativePayment
         {
             services.AddCors(options =>
             {
-                options.AddPolicy("AllowAllOrigins", builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+                options.AddPolicy("AllowAllOrigins", builder => builder.AllowAnyOrigin());
             });
 
             services.AddDbContext<PaymentContext>(options => options.UseMySql(Environment.GetEnvironmentVariable("PAYMENT_DATABASE")));
