@@ -47,7 +47,8 @@ namespace McNativePayment.Controllers
             order.Status = "APPROVED";
             await _context.SaveChangesAsync();
 
-            return Redirect("https://console.mcnative.org?checkout=complete");
+            if(order.RedirectUrl == null) return Redirect("https://console.mcnative.org?checkout=complete");
+            else return Redirect(order.RedirectUrl);
         }
 
        // [HttpPost("PayPal")]

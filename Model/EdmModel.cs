@@ -29,6 +29,7 @@ namespace McNativePayment.Model
             ActionConfiguration coFunction = oderType.Collection.Action("Create");
             coFunction.Parameter<string>("PaymentMethod").Required();
             coFunction.Parameter<string>("OrganisationId").Required();
+            coFunction.Parameter<string>("RedirectUrl").Optional();
             coFunction.CollectionParameter<Guid>("Products");
             coFunction.ReturnsFromEntitySet<LicenseActive>("Orders");
 
