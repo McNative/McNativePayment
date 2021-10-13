@@ -88,7 +88,7 @@ namespace McNativePayment.Services
 
                                 foreach (ProductAssignment assignment in product.Assignments)
                                 {
-                                    LicenseActive active = await mcnative.ActiveLicenses.Where(a => a.OrganisationId == order.OrganisationId).FirstOrDefaultAsync(cancellationToken);
+                                    LicenseActive active = await mcnative.ActiveLicenses.Where(a => a.OrganisationId == order.OrganisationId && a.LicenseId == assignment.ReferenceId).FirstOrDefaultAsync(cancellationToken);
                                     if (active == null)
                                     {
                                         active = new LicenseActive

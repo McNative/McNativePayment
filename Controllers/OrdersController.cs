@@ -57,7 +57,7 @@ namespace McNativePayment.Controllers
             order.Created = DateTime.Now;
             order.Expiry = DateTime.Now.AddDays(1);
 
-            if (parameters.ContainsKey("RedirectUrl")) order.RedirectUrl = (string)parameters["RedirectUrl"];
+            if (parameters.ContainsKey("RedirectUrl")) order.RedirectUrl = (string) parameters["RedirectUrl"];
 
             await _context.Orders.AddAsync(order);
 
