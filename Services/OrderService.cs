@@ -8,6 +8,7 @@ using McNativePayment.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Sentry;
 
 namespace McNativePayment.Services
 {
@@ -103,7 +104,21 @@ namespace McNativePayment.Services
                                     }
                                     else
                                     {
-                                        if (active.Expiry != null) active.Expiry = active.Expiry.Value.AddDays(edition.Duration.Value);
+                                        if (edition.Duration != null)
+                                        {
+                                            if(active.Expiry == null || active.Expiry < DateTime.Now)
+                                            {
+                                                active.Expiry = DateTime.Now.AddDays(edition.Duration.Value);
+                                            }
+                                            else
+                                            {
+                                                active.Expiry = active.Expiry.Value.AddDays(edition.Duration.Value);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            active.Expiry = null;
+                                        }
                                         active.LastRenewal = DateTime.Now;
                                         mcnative.Update(active);
                                     }
@@ -123,6 +138,7 @@ namespace McNativePayment.Services
                         catch (Exception ex)
                         {
                             Console.WriteLine(ex);
+                            SentrySdk.CaptureException(ex);
                             await payTransaction.RollbackAsync(cancellationToken);
                             await mcnTransaction.RollbackAsync(cancellationToken);
                         }
@@ -131,6 +147,7 @@ namespace McNativePayment.Services
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex);
+                    SentrySdk.CaptureException(ex);
                 }
 
                 Thread.Sleep(1000 * 60);
