@@ -45,6 +45,7 @@ namespace McNativePayment.Services
                 try
                 {
                     IList<Order> orders = payment.Orders.Where(o => o.Status == "APPROVED")
+                        .Include(e => e.Referral)
                         .Include(e => e.Products)
                         .ThenInclude(e => e.ProductEdition)
                         .ThenInclude(e => e.Product)
