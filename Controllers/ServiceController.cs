@@ -1,24 +1,23 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
-using Force.Crc32;
 using McNativePayment.Model;
 using McNativePayment.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Newtonsoft.Json.Linq;
+using Stripe;
+using Stripe.Checkout;
+using Order = McNativePayment.Model.Order;
 
 namespace McNativePayment.Controllers
 {
+
     [ApiController]
     [Route("Service")]
     public class ServiceController : Controller
@@ -51,33 +50,28 @@ namespace McNativePayment.Controllers
             else return Redirect(order.RedirectUrl);
         }
 
-       // [HttpPost("PayPal")]
-        public async Task<IActionResult> PayPal()
+        [HttpPost("Stripe")]
+        public async Task<IActionResult> StripeComplete()
         {
-            return NotFound();
-            MemoryStream stream = new MemoryStream(16384);
-            Request.Body.CopyToAsync(stream);
+            var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+            var signature = HttpContext.Request.Headers["Stripe-Signature"];
+            var stripeEvent = EventUtility.ConstructEvent(json, signature, Environment.GetEnvironmentVariable("STRIPE_WEBHOOK_SECRET"), throwOnApiVersionMismatch: false);
 
-            HttpRequest request = HttpContext.Request;
+            if(stripeEvent.Type == "checkout.session.completed")
+            {
+                var session = stripeEvent.Data.Object as Session;
+                Order order = await _context.Orders.FirstOrDefaultAsync(o => o.ReferenceId == session.Id);
+                if (order == null) return NotFound("Order not found");
 
-            string transmissionId = request.Headers["PAYPAL-TRANSMISSION-ID"];
-            string transmissionTime = request.Headers["PAYPAL-TRANSMISSION-TIME"];
-            byte[] data = stream.ToArray();
-            string crc = Crc32Algorithm.Compute(data).ToString();
-            string webhookId = Environment.GetEnvironmentVariable("PAYPAL_WEB_HOOK_ID");
-            String verifyString = transmissionId + "|" + transmissionTime + "|" + webhookId + "|" + crc;
+                order.Status = "APPROVED";
+                await _context.SaveChangesAsync();
 
-            string signature = request.Headers["PAYPAL-TRANSMISSION-SIG"];
-            string certificateUrl = request.Headers["PAYPAL-CERT-URL"];
-
-            bool valid = ValidateSignature(signature, verifyString, certificateUrl);
-
-            if (!valid) return BadRequest("Invalid signature");
-
-
-            JObject json = JObject.Parse(Encoding.UTF8.GetString(data));
-
-            return Ok();
+                return Ok();
+            }
+            else
+            {
+                return BadRequest();
+            }
         }
 
         private bool ValidateSignature(string signature, String verifyString, string certificateUrl)

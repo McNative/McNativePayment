@@ -30,6 +30,8 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "PAYPAL_REDIRECT": "https://development-redirect-davide.pretronic.net/service/paypal",
         "PAYPAL_CLIENT_ID": "ASxuOnNuiBx7wf6B2yZpr_TrQroOopWtA_hzLurK_NO0vFROUnUKLj54ncfH77_U-fGtVvZqN-2pmNJK",
+        "STRIPE_SECRET": "sk_test_mj9Nt6WnKtEXTylecndaXDso00XaoZyXFZ",
+        "STRIPE_WEBHOOK_SECRET": "whsec_xW6PC2c0f43SbAxi8E4wXjeqy4iHY7ZH",
         "PAYMENT_DATABASE": "Server=192.168.1.14;Port=3306;Database=mcnative-payment;User=mcnative-payment;Password=\"Eh)kjpCtizsDhLskbD8uY6HFtwg&kFRHY\";Pooling=true"
       },
       "applicationUrl": "https://localhost:5001;http://localhost:5000"

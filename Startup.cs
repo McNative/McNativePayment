@@ -21,7 +21,6 @@ namespace McNativePayment
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors(options =>
@@ -44,8 +43,9 @@ namespace McNativePayment
                 ,Environment.GetEnvironmentVariable("PAYPAL_CLIENT_ID")
                 ,Environment.GetEnvironmentVariable("PAYPAL_SECRET")
                 ,Environment.GetEnvironmentVariable("PAYPAL_REDIRECT")));
+            services.AddSingleton(new StripeService(Environment.GetEnvironmentVariable("STRIPE_SECRET")));
 
-            services.AddHostedService<OrderService>();
+           services.AddHostedService<OrderService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

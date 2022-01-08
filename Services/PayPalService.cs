@@ -46,7 +46,7 @@ namespace McNativePayment.Services
                         currency_code = "EUR",
                         value = product.Price
                     },
-                    name = product.Product.Name+" ("+product.Name+")",
+                    name = product.Product.Name,
                     category = "DIGITAL_GOODS",
                     quantity = "1",
                 };
@@ -76,10 +76,10 @@ namespace McNativePayment.Services
                     }
                 },
                 application_context = new {
-                    brand_name = "McNative Store",
+                    brand_name = "Pretronic",
                     user_action = "PAY_NOW",
                     shipping_preference = "NO_SHIPPING",
-                    return_url = _redirectUrl
+                    return_url = _redirectUrl,
                 }
             };
 
@@ -119,11 +119,8 @@ namespace McNativePayment.Services
             string json = reader.ReadToEnd();
             JObject data = JObject.Parse(json);
 
-            string appending = "";
-            if (order.PaymentMethod.Equals("card",StringComparison.OrdinalIgnoreCase)) appending = "&fundingSource=card";
-
             order.ReferenceId = data["id"].ToString();
-            order.CheckoutUrl = data["links"][1]["href"].ToString()+ appending;
+            order.CheckoutUrl = data["links"][1]["href"].ToString();
         }
 
         public async Task<bool> CaptureOrder(string token)

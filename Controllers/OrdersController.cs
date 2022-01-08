@@ -19,11 +19,13 @@ namespace McNativePayment.Controllers
 
         private readonly PaymentContext _context;
         private readonly PayPalService _payPalService;
+        private readonly StripeService _stripeService;
 
-        public OrdersController(PaymentContext context,PayPalService payPalService)
+        public OrdersController(PaymentContext context,PayPalService payPalService, StripeService stripeService)
         {
             _context = context;
             _payPalService = payPalService;
+            _stripeService = stripeService;
         }
 
         [HttpPost]
@@ -33,6 +35,8 @@ namespace McNativePayment.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
             string method = (string) parameters["PaymentMethod"];
             string organisationId = (string)parameters["OrganisationId"];
+            string email = parameters.ContainsKey("Email") ? (string)parameters["Email"] : null;
+
             IEnumerable<Guid> products0 = (IEnumerable<Guid>)parameters["Products"];
 
             IList<ProductEdition> products = _context.ProductEditions
@@ -48,9 +52,17 @@ namespace McNativePayment.Controllers
             double price = products.Sum(p => p.Price);
             if (price == 0) return BadRequest();
 
+            //PAYPAL
+            //CARD
+            //SOFORT
+            //GIROPAY
+            //SEPA-DEBIT
+
+            bool paypal = method.Equals("PAYPAL");
+
             Order order = new Order();
             order.OrganisationId = organisationId;
-            order.PaymentProvider = "PAYPAL";
+            order.PaymentProvider = paypal ? "PAYPAL" : "STRIPE";
             order.PaymentMethod = method;
             order.Status = "OPEN";
             order.Amount = price;
@@ -58,6 +70,7 @@ namespace McNativePayment.Controllers
             order.Expiry = DateTime.Now.AddDays(1);
 
             if (parameters.ContainsKey("RedirectUrl")) order.RedirectUrl = (string) parameters["RedirectUrl"];
+            if (parameters.ContainsKey("CancelUrl")) order.CancelUrl = (string)parameters["CancelUrl"];
 
             await _context.Orders.AddAsync(order);
 
@@ -71,9 +84,11 @@ namespace McNativePayment.Controllers
                 });
             }
 
-            await _payPalService.CreateOrder(order, products);
+            if(paypal) await _payPalService.CreateOrder(order, products);
+            else await _stripeService.CreateOrder(email,method, order, products);
 
             await _context.SaveChangesAsync();
+
             return Ok(order);
         }
     }

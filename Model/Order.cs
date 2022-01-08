@@ -26,6 +26,8 @@ namespace McNativePayment.Model
 
         public string RedirectUrl { get; set; }
 
+        public string CancelUrl { get; set; }
+
         public DateTime Created { get; set; }
 
         public DateTime Expiry { get; set; }
