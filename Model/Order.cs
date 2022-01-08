@@ -14,6 +14,8 @@ namespace McNativePayment.Model
 
         public string OrganisationId { get; set; }
 
+        public Guid? ReferralId { get; set; }
+
         public string PaymentProvider { get; set; }
 
         public string PaymentMethod { get; set; }
@@ -33,6 +35,10 @@ namespace McNativePayment.Model
         public DateTime Expiry { get; set; }
 
         public string Status { get; set; }
+
+        [JsonIgnore]
+        [InverseProperty("ReferralId")]
+        public virtual Referral Referral { get; set; }
 
 
         [JsonIgnore]

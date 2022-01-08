@@ -71,6 +71,10 @@ namespace McNativePayment.Services
                             {
                                 ProductEdition edition = orderProduct.ProductEdition;
                                 Product product = edition.Product;
+
+                                double commission = 0;
+                                if (order.Referral != null && order.Referral.OrganisationId != null) commission = order.Referral.Commission;
+
                                 Transaction internalTransaction = new Transaction
                                 {
                                     FromOrganisationId = order.OrganisationId,
@@ -79,13 +83,33 @@ namespace McNativePayment.Services
                                     OrderId = order.Id,
                                     ProductId = product.Id,
                                     ProductEditionId = product.Id,
-                                    AmountIn = orderProduct.Amount,
-                                    AmountOut = orderProduct.Amount * 0.8,
+                                    AmountIn = orderProduct.Amount * (1.0 - commission),
+                                    AmountOut = orderProduct.Amount * (1.0 - commission),
                                     Status = "APPROVED",
                                     Time = DateTime.Now,
                                     IssuerId = "464d60d2-e1fc-4986-b7cd-70ad6288f666"
                                 };
+
                                 await payment.AddAsync(internalTransaction, cancellationToken);
+
+                                if (commission > 0)
+                                {
+                                    Transaction referralTransaction = new Transaction
+                                    {
+                                        FromOrganisationId = product.OrganisationId,
+                                        ToOrganisationId = order.Referral.OrganisationId,
+                                        Subject = "Referral commission",
+                                        OrderId = order.Id,
+                                        ProductId = product.Id,
+                                        ProductEditionId = product.Id,
+                                        AmountIn = orderProduct.Amount * commission,
+                                        AmountOut = orderProduct.Amount * commission,
+                                        Status = "APPROVED",
+                                        Time = DateTime.Now,
+                                        IssuerId = "464d60d2-e1fc-4986-b7cd-70ad6288f666"
+                                    };
+                                    await payment.AddAsync(referralTransaction, cancellationToken);
+                                }
 
                                 foreach (ProductAssignment assignment in product.Assignments)
                                 {

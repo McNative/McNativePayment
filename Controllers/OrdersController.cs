@@ -52,12 +52,6 @@ namespace McNativePayment.Controllers
             double price = products.Sum(p => p.Price);
             if (price == 0) return BadRequest();
 
-            //PAYPAL
-            //CARD
-            //SOFORT
-            //GIROPAY
-            //SEPA-DEBIT
-
             bool paypal = method.Equals("PAYPAL");
 
             Order order = new Order();
@@ -71,6 +65,13 @@ namespace McNativePayment.Controllers
 
             if (parameters.ContainsKey("RedirectUrl")) order.RedirectUrl = (string) parameters["RedirectUrl"];
             if (parameters.ContainsKey("CancelUrl")) order.CancelUrl = (string)parameters["CancelUrl"];
+
+            if (parameters.ContainsKey("ReferralCode"))
+            {
+                string code = (string)parameters["ReferralCode"];
+                Referral referral = await _context.Referrals.Where(r => r.IsActive && r.Code == code).FirstOrDefaultAsync();
+                order.ReferralId = referral.Id;
+            }
 
             await _context.Orders.AddAsync(order);
 

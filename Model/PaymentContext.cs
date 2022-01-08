@@ -19,6 +19,9 @@ namespace McNativePayment.Model
         public DbSet<ProductAssignment> ProductAssignments { get; set; }
 
         public DbSet<Issuer> Issuers { get; set; }
+
+        public DbSet<Referral> Referrals { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Transaction>().ToTable("mcnative_payment_transactions");
@@ -28,6 +31,7 @@ namespace McNativePayment.Model
             modelBuilder.Entity<ProductEdition>().ToTable("mcnative_payment_product_editions");
             modelBuilder.Entity<ProductAssignment>().ToTable("mcnative_payment_product_assignments");
             modelBuilder.Entity<Issuer>().ToTable("mcnative_payment_issuer");
+            modelBuilder.Entity<Referral>().ToTable("mcnative_payment_referral");
         }
 
     }

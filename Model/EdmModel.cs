@@ -32,6 +32,7 @@ namespace McNativePayment.Model
             coFunction.Parameter<string>("RedirectUrl").Optional();
             coFunction.Parameter<string>("CancelUrl").Optional();
             coFunction.Parameter<string>("Email").Optional();
+            coFunction.Parameter<string>("ReferralCode").Optional();
             coFunction.CollectionParameter<Guid>("Products");
             coFunction.ReturnsFromEntitySet<LicenseActive>("Orders");
 
