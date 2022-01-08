@@ -37,7 +37,7 @@ namespace McNativePayment.Model
         public string Status { get; set; }
 
         [JsonIgnore]
-        [InverseProperty("ReferralId")]
+        [ForeignKey("ReferralId")]
         public virtual Referral Referral { get; set; }
 
 
